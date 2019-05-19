@@ -4,78 +4,65 @@ using UnityEngine;
 
 public class CreatureController : MonoBehaviour
 {
-    [SerializeField]
-    private float speed = 3f;
+    public GameObject creature;
 
-    private Vector3 startPosition;
+    private int foodCollected = 0;
 
-    private float energy = 10f;
+    private GameController gameController;
+    private CreatureMovement creatureMovement;
 
     private void Start()
     {
-        startPosition = transform.position;
-        StartDay();
+        gameController = FindObjectOfType<GameController>();
+        creatureMovement = GetComponent<CreatureMovement>();
+
+        gameController.startDay += StartDay;
+        gameController.stopDay += StopDay;
     }
 
-    private void Update()
+    private void OnTriggerEnter(Collider other)
     {
-        CheckOutOfBounds();
-        CheckEnergy();
-    }
-
-    private IEnumerator ChooseRandomDirection()
-    {
-        transform.LookAt(new Vector3(Random.Range(-1f, 1f), startPosition.y, Random.Range(-1f, 1f)));
-
-        yield return new WaitForSeconds(1f);
-
-        StartCoroutine(ChooseRandomDirection());
+        if (other.tag.Equals("Food"))
+        {
+            Destroy(other.gameObject);
+            foodCollected++;
+        }
     }
 
     private void StartDay()
     {
-        StartCoroutine(ChooseRandomDirection());
+        foodCollected = 0;
+
+        creatureMovement.StartDay();
     }
 
     private void StopDay()
     {
-        //Check for food, etc.
-    }
+        creatureMovement.StopDay();
 
-    private void Move()
-    {
-        transform.Translate(Vector3.forward * speed * Time.deltaTime);
-    }
-
-    private void ReturnToStartPosition()
-    {
-        StopCoroutine(ChooseRandomDirection());
-        transform.LookAt(startPosition);
-    }
-
-    private void CheckOutOfBounds()
-    {
-        if (Mathf.Abs(transform.position.x) > 9 || Mathf.Abs(transform.position.z) > 9)
+        if (foodCollected == 0)
         {
-            transform.LookAt(startPosition);
+            Die();
+        }
+        else if (foodCollected >= 2)
+        {
+            Reproduce();
         }
     }
 
-    private void CheckEnergy()
+    private void Die()
     {
-        if (energy > 0)
-        {
-            energy -= Time.deltaTime;
-            Move();
-        }
-        else
-        {
-            ReturnToStartPosition();
+        gameController.startDay -= StartDay;
+        gameController.stopDay -= StopDay;
 
-            if (Vector3.Distance(startPosition, transform.position) > 0.1f)
-            {
-                Move();
-            }
-        }
+        creatureMovement.Die();
+
+        Destroy(gameObject);
+    }
+
+    private void Reproduce()
+    {
+        Instantiate(creature, transform.position + transform.right, transform.rotation);
+        //"creature.stats = stats"
     }
 }
