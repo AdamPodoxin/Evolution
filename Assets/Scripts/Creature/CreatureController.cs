@@ -5,8 +5,12 @@ using UnityEngine;
 public class CreatureController : MonoBehaviour
 {
     public GameObject creature;
+    public float senseRadius = 2f;
+
+    [SerializeField] private CreatureStats creatureStats = new CreatureStats();
 
     private int foodCollected = 0;
+
 
     private GameController gameController;
     private CreatureMovement creatureMovement;
@@ -18,6 +22,8 @@ public class CreatureController : MonoBehaviour
 
         gameController.startDay += StartDay;
         gameController.stopDay += StopDay;
+
+        ApplyStats();
     }
 
     private void OnTriggerEnter(Collider other)
@@ -27,38 +33,28 @@ public class CreatureController : MonoBehaviour
             Destroy(other.gameObject);
             foodCollected++;
 
-            StartCoroutine(creatureMovement.ChooseRandomDirection());
+            creatureMovement.ChooseRandomDirection();
         }
     }
 
-    private IEnumerator CheckForFood()
+    private void ApplyStats()
     {
-        Collider[] colliders = Physics.OverlapSphere(transform.position, 2);
-        foreach (Collider collider in colliders)
-        {
-            if (collider.CompareTag("Food"))
-            {
-                creatureMovement.LookAt(collider.transform.position);
-                StopCoroutine(creatureMovement.ChooseRandomDirection());
-            }
-        }
+        creatureMovement.speed = creatureStats.speed;
+        creatureMovement.startEnergy = creatureStats.energy;
+        senseRadius = creatureStats.senseRadius;
 
-        yield return new WaitForSeconds(0.5f);
-
-        StartCoroutine(CheckForFood());
+        creatureMovement.CalculateEnergyLoss();
     }
 
     private void StartDay()
     {
         foodCollected = 0;
-        StartCoroutine(CheckForFood());
 
         creatureMovement.StartDay();
     }
 
     private void StopDay()
     {
-        StopCoroutine(CheckForFood());
         creatureMovement.StopDay();
 
         if (foodCollected == 0)
@@ -83,7 +79,26 @@ public class CreatureController : MonoBehaviour
 
     private void Reproduce()
     {
-        Instantiate(creature, transform.position + transform.right, transform.rotation);
-        //"creature.stats = stats"
+        Instantiate(creature, transform.position + transform.right, transform.rotation).GetComponent<CreatureController>().creatureStats = creatureStats;
+    }
+}
+
+[System.Serializable]
+public class CreatureStats
+{
+    public float speed = 3f;
+    public float energy = 10f;
+    public float senseRadius = 2f;
+
+    public CreatureStats()
+    {
+
+    }
+
+    public CreatureStats(float speed, float energy, float senseRadius)
+    {
+        this.speed = speed;
+        this.energy = energy;
+        this.senseRadius = senseRadius;
     }
 }

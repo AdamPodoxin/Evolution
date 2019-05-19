@@ -4,22 +4,24 @@ using UnityEngine;
 
 public class CreatureMovement : MonoBehaviour
 {
-    [SerializeField]
-    private float speed = 3f;
+    public float speed = 3f;
+
+    public float startEnergy = 10f;
+    private float energy;
+    private float energyLoss;
 
     private Vector3 startPosition;
     private Quaternion direction;
 
-    private float startEnergy = 10f;
-    private float energy;
-
     private bool dayGoing = false;
 
     private GameController gameController;
+    private CreatureController creatureController;
 
     private void Start()
     {
         gameController = FindObjectOfType<GameController>();
+        creatureController = GetComponent<CreatureController>();
 
         startPosition = transform.position;
         direction = transform.rotation;
@@ -34,6 +36,39 @@ public class CreatureMovement : MonoBehaviour
         }
     }
 
+    private IEnumerator ChooseRandomDirectionCoroutine()
+    {
+        yield return new WaitForSeconds(Random.Range(0.5f, 1f));
+
+        if (!CheckForFood())
+        {
+            ChooseRandomDirection();
+            StartCoroutine(ChooseRandomDirectionCoroutine());
+        }
+    }
+
+    public void ChooseRandomDirection()
+    {
+        direction = Quaternion.Euler(0, transform.eulerAngles.y + Random.Range(-60f, 60f), 0);
+    }
+
+    private bool CheckForFood()
+    {
+        Collider[] colliders = Physics.OverlapSphere(transform.position, creatureController.senseRadius);
+        foreach (Collider collider in colliders)
+        {
+            if (collider.CompareTag("Food"))
+            {
+                StopCoroutine(ChooseRandomDirectionCoroutine());
+                LookAt(collider.transform.position);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void Move()
     {
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
@@ -42,7 +77,7 @@ public class CreatureMovement : MonoBehaviour
 
     private void ReturnToStartPosition()
     {
-        StopCoroutine(ChooseRandomDirection());
+        StopCoroutine(ChooseRandomDirectionCoroutine());
 
         LookAt(startPosition);
     }
@@ -59,7 +94,7 @@ public class CreatureMovement : MonoBehaviour
     {
         if (energy > 0)
         {
-            energy -= Time.deltaTime;
+            energy -= energyLoss * Time.deltaTime;
             Move();
         }
         else
@@ -78,12 +113,9 @@ public class CreatureMovement : MonoBehaviour
         }
     }
 
-    public IEnumerator ChooseRandomDirection()
+    public void CalculateEnergyLoss()
     {
-        yield return new WaitForSeconds(Random.Range(0.5f, 1f));
-
-        direction = Quaternion.Euler(0, transform.eulerAngles.y + Random.Range(-60f, 60f), 0);
-        StartCoroutine(ChooseRandomDirection());
+        energyLoss = speed / 3f;
     }
 
     public void LookAt(Vector3 lookDirection)
@@ -97,7 +129,7 @@ public class CreatureMovement : MonoBehaviour
         energy = startEnergy;
         dayGoing = true;
 
-        StartCoroutine(ChooseRandomDirection());
+        StartCoroutine(ChooseRandomDirectionCoroutine());
     }
 
     public void StopDay()
@@ -107,6 +139,6 @@ public class CreatureMovement : MonoBehaviour
 
     public void Die()
     {
-        StopCoroutine(ChooseRandomDirection());
+        StopCoroutine(ChooseRandomDirectionCoroutine());
     }
 }

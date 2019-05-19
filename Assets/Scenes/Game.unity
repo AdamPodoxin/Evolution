@@ -598,6 +598,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   foodPrefab: {fileID: 8105349028032205453, guid: a4c1d28cb4d37424e9f4c7bcbe6fd0b8,
     type: 3}
+  currentFoodAmount: 20
 --- !u!4 &1643701287
 Transform:
   m_ObjectHideFlags: 0
