@@ -22,22 +22,43 @@ public class CreatureController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag.Equals("Food"))
+        if (other.CompareTag("Food"))
         {
             Destroy(other.gameObject);
             foodCollected++;
+
+            StartCoroutine(creatureMovement.ChooseRandomDirection());
         }
+    }
+
+    private IEnumerator CheckForFood()
+    {
+        Collider[] colliders = Physics.OverlapSphere(transform.position, 2);
+        foreach (Collider collider in colliders)
+        {
+            if (collider.CompareTag("Food"))
+            {
+                creatureMovement.LookAt(collider.transform.position);
+                StopCoroutine(creatureMovement.ChooseRandomDirection());
+            }
+        }
+
+        yield return new WaitForSeconds(0.5f);
+
+        StartCoroutine(CheckForFood());
     }
 
     private void StartDay()
     {
         foodCollected = 0;
+        StartCoroutine(CheckForFood());
 
         creatureMovement.StartDay();
     }
 
     private void StopDay()
     {
+        StopCoroutine(CheckForFood());
         creatureMovement.StopDay();
 
         if (foodCollected == 0)

@@ -27,9 +27,10 @@ public class GameController : MonoBehaviour
         creaturesEnded = 0;
         stopDay.Invoke();
 
+        GenerateFood();
+
         yield return new WaitForSeconds(1);
 
-        GenerateFood();
         startDay.Invoke();
     }
 

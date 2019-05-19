@@ -40,28 +40,18 @@ public class CreatureMovement : MonoBehaviour
         transform.rotation = Quaternion.Lerp(transform.rotation, direction, 5 * Time.deltaTime);
     }
 
-    private IEnumerator ChooseRandomDirection()
-    {
-        yield return new WaitForSeconds(Random.Range(0.5f, 1f));
-
-        direction = Quaternion.Euler(0, transform.eulerAngles.y + Random.Range(-60f, 60f), 0);
-        StartCoroutine(ChooseRandomDirection());
-    }
-
     private void ReturnToStartPosition()
     {
         StopCoroutine(ChooseRandomDirection());
 
-        transform.LookAt(startPosition);
-        direction = transform.rotation;
+        LookAt(startPosition);
     }
 
     private void CheckOutOfBounds()
     {
         if (Mathf.Abs(transform.position.x) > 9 || Mathf.Abs(transform.position.z) > 9)
         {
-            transform.LookAt(Vector3.up * startPosition.y);
-            direction = transform.rotation;
+            LookAt(Vector3.up * startPosition.y);
         }
     }
 
@@ -86,6 +76,20 @@ public class CreatureMovement : MonoBehaviour
                 gameController.CreatureEnded();
             }
         }
+    }
+
+    public IEnumerator ChooseRandomDirection()
+    {
+        yield return new WaitForSeconds(Random.Range(0.5f, 1f));
+
+        direction = Quaternion.Euler(0, transform.eulerAngles.y + Random.Range(-60f, 60f), 0);
+        StartCoroutine(ChooseRandomDirection());
+    }
+
+    public void LookAt(Vector3 lookDirection)
+    {
+        transform.LookAt(lookDirection);
+        direction = transform.rotation;
     }
 
     public void StartDay()
