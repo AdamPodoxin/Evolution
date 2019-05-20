@@ -8,6 +8,7 @@ public class CreatureController : MonoBehaviour
     public float senseRadius = 2f;
 
     [SerializeField] private CreatureStats creatureStats = new CreatureStats();
+    private static CreatureStats initialStats;
 
     private int foodCollected = 0;
 
@@ -23,6 +24,7 @@ public class CreatureController : MonoBehaviour
         gameController.startDay += StartDay;
         gameController.stopDay += StopDay;
 
+        initialStats = creatureStats;
         ApplyStats();
     }
 
@@ -79,7 +81,30 @@ public class CreatureController : MonoBehaviour
 
     private void Reproduce()
     {
-        Instantiate(creature, transform.position + transform.right, transform.rotation).GetComponent<CreatureController>().creatureStats = creatureStats;
+        CreatureController clone = Instantiate(creature, transform.position + transform.right, transform.rotation).GetComponent<CreatureController>();
+
+        int mutationChance = Random.Range(0, 10);
+        CreatureStats cloneStats = creatureStats.CloneStats();
+
+        if (mutationChance == 0)
+        {
+            int mutationIndex = Random.Range(0, 3);
+
+            if (mutationIndex == 0)
+            {
+                cloneStats.speed += initialStats.speed * 0.05f;
+            }
+            else if (mutationIndex == 1)
+            {
+                cloneStats.energy += initialStats.energy * 0.05f;
+            }
+            else if (mutationIndex == 2)
+            {
+                cloneStats.senseRadius += initialStats.senseRadius * 0.05f;
+            }
+        }
+
+        clone.creatureStats = cloneStats;
     }
 }
 
@@ -100,5 +125,10 @@ public class CreatureStats
         this.speed = speed;
         this.energy = energy;
         this.senseRadius = senseRadius;
+    }
+
+    public CreatureStats CloneStats()
+    {
+        return new CreatureStats(speed, energy, senseRadius);
     }
 }
